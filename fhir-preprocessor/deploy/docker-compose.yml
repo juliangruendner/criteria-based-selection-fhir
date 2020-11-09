@@ -1,0 +1,36 @@
+version: '3.7'
+
+services:
+
+  postgresdb:
+    container_name: refInt_preproc_db
+    image: postgres:latest
+    restart: unless-stopped
+    networks:
+      - refIntPreprocBackend
+    ports:
+      - "127.0.0.1:5435:5432"
+    env_file:
+      - config_preproc.env
+
+  preproc:
+    container_name: refInt_preproc
+    env_file:
+      - config_preproc.env
+    image: docker.miracum.org/ketos/ref_int_preproc:v1.3.2
+    restart: unless-stopped
+    depends_on:
+      - postgresdb
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logging:/etc/refInt/logging
+    networks:
+      - hbBackend
+      - refIntPreprocBackend
+
+networks:
+  refIntPreprocBackend:
+  hbBackend:
+    external: true
+    name: hbBackend

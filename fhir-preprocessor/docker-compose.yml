@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+
+  postgresdb:
+    container_name: refInt_preproc_db
+    image: postgres:latest
+    restart: unless-stopped
+    networks:
+      - refIntPreprocBackend
+    ports:
+      - "127.0.0.1:5435:5432"
+    env_file:
+      - config_preproc.env
+
+  preproc:
+    container_name: refInt_preproc
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - config_preproc.env
+    image: python:3
+    restart: unless-stopped
+    depends_on:
+      - postgresdb
+    ports:
+      - "5000:5000"
+    networks:
+      - hbBackend
+      - refIntPreprocBackend
+      - ketos_environment
+    volumes:
+      - ./src:/opt/refInt
+      - ./logging:/etc/refInt/logging
+    command: bash -c "cd /opt/refInt && chmod +x startup.dev.sh && ./startup.dev.sh"
+
+networks:
+  refIntPreprocBackend:
+  hbBackend:
+    external: true
+    name: hbBackend
+  ketos_environment:
+    external: true
+    name: ketos_environment
